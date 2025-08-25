@@ -1,0 +1,258 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Prompt Studio</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/javascript/javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/python/python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/mode/xml/xml.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/codemirror.min.css" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.7/theme/monokai.min.css" />
+  <style>
+    body {
+      background-color: #f8fafc;
+      color: #1e293b;
+    }
+    .glass-effect {
+      background: rgba(255, 255, 255, 0.8);
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+    }
+    textarea:focus {
+      outline: none;
+      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.3);
+    }
+    button:disabled {
+      background-color: #93c5fd;
+      cursor: not-allowed;
+    }
+	
+    .CodeMirror {
+      border: none;
+      border-radius: 8px;
+      height: auto;
+      min-height: 100px;
+      font-size: 14px;
+      margin-top: 8px;
+    }
+	.tooltip {
+        background: #f8fafc;
+        color: #1e293b;
+      }
+    .copy-icon {
+      opacity: 0.7;
+      transition: opacity 0.2s ease;
+    }
+    .copy-icon:hover {
+      opacity: 1;
+    }
+    .copy-icon.copied {
+      opacity: 1;
+      fill: #22c55e;
+    }
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: #1e293b;
+        color: #f8fafc;
+      }
+      .glass-effect {
+        background: rgba(30, 41, 59, 0.8);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      textarea {
+        background: #334155;
+        color: #f8fafc;
+        border-color: rgba(255, 255, 255, 0.2);
+      }
+      .CodeMirror {
+        background: #272822;
+        color: #f8f8f2;
+      }
+    }
+  </style>
+</head>
+<body class="min-h-screen font-sans">
+  <div class="container mx-auto px-4 py-8 sm:px-6 lg:px-8">
+    <header class="text-center mb-10">
+      <h1 class="text-4xl font-bold tracking-tight sm:text-5xl">Gemini AI  | Rajesh C</h1>
+      <p class="mt-3 text-lg text-gray-600 dark:text-gray-300">Unleash creativity with a sleek, intuitive AI interface</p>
+    </header>
+
+    <main class="max-w-2xl mx-auto">
+      <div class="glass-effect p-6">
+        <label for="prompt" class="block text-sm font-medium mb-2">Your Prompt</label>
+        <textarea
+          id="prompt"
+          rows="4"
+          class="w-full bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 border border-gray-200 dark:border-gray-600 rounded-lg p-3 transition-all duration-200 resize-y"
+          placeholder="Type your prompt here..."
+        ></textarea>
+        <div class="flex justify-between items-center mt-4">
+          <button id="callAIModel"
+            onclick="callAI()"
+            class="bg-blue-600 hover:bg-blue-700 text-white font-medium py-2 px-5 rounded-lg transition-all duration-200 flex items-center disabled:opacity-50"
+          >
+            <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+            </svg>
+            Generate
+          </button>
+          <span id="status" class="text-sm text-gray-500 dark:text-gray-400"></span>
+        </div>
+      </div>
+
+      <div id="response-container" class="mt-6 hidden">
+        <h2 class="text-xl font-semibold mb-3">AI Response</h2>
+        <div class="glass-effect p-5 relative">
+          <div id="response" class="text-gray-800 dark:text-gray-200 whitespace-pre-wrap"></div>
+          <div id="code-container" class="hidden">
+            <div class="flex justify-end mb-2">
+			  <svg id="copy-icon" onclick="copyCode()" class="copy-icon cursor-pointer"  width="24" height="24" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" class="icon-xs"><path fill-rule="evenodd" clip-rule="evenodd" d="M7 5C7 3.34315 8.34315 2 10 2H19C20.6569 2 22 3.34315 22 5V14C22 15.6569 20.6569 17 19 17H17V19C17 20.6569 15.6569 22 14 22H5C3.34315 22 2 20.6569 2 19V10C2 8.34315 3.34315 7 5 7H7V5ZM9 7H14C15.6569 7 17 8.34315 17 10V15H19C19.5523 15 20 14.5523 20 14V5C20 4.44772 19.5523 4 19 4H10C9.44772 4 9 4.44772 9 5V7ZM5 9C4.44772 9 4 9.44772 4 10V19C4 19.5523 4.44772 20 5 20H14C14.5523 20 15 19.5523 15 19V10C15 9.44772 14.5523 9 14 9H5Z" fill="currentColor"></path></svg>
+              <span id="tooltip" class="tooltip hidden">Copied!</span>
+			</div>
+            <textarea id="code-editor" class="hidden"></textarea>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer class="mt-12 text-center text-gray-500 dark:text-gray-400 text-sm">
+      <p>Powered by Google’s Gemini 2.0 Flash AI Model</p>
+    </footer>
+  </div>
+
+  <script>
+    let codeEditor = null;
+
+    function initializeCodeEditor(code, language) {
+      const codeContainer = document.getElementById('code-container');
+      const codeEditorElement = document.getElementById('code-editor');
+      codeContainer.classList.remove('hidden');
+
+      if (codeEditor) {
+        codeEditor.setValue(code);
+      } else {
+        codeEditor = CodeMirror.fromTextArea(codeEditorElement, {
+          lineNumbers: true,
+          mode: language || 'javascript',
+          theme: 'monokai',
+          readOnly: true,
+          viewportMargin: Infinity
+        });
+        codeEditor.setValue(code);
+      }
+    }
+
+    function copyCode() {
+      const code = codeEditor.getValue();
+      navigator.clipboard.writeText(code).then(() => {
+        const copyIcon = document.getElementById('copy-icon');
+        const tooltip = document.getElementById('tooltip');
+        copyIcon.classList.add('copied');
+        tooltip.classList.remove('hidden');
+        setTimeout(() => {
+          copyIcon.classList.remove('copied');
+          tooltip.classList.add('hidden');
+        }, 2000);
+      }).catch((err) => {
+        console.error('Copy failed:', err);
+      });
+    }
+	
+
+    function isCodeResponse(text) {
+     const codeBlockRegex = /```(\w+)?\n([\s\S]*?)\n```/;
+     return codeBlockRegex.test(text); 
+    }  
+
+    function extractCodeAndLanguage(text) {
+      const codeBlockRegex = /```(\w+)?\n([\s\S]*?)\n```/;
+      const match = text.match(codeBlockRegex);
+      if (match) {
+        return {
+          code: match[2].trim(),
+          language: match[1] || 'javascript',
+          nonCode: text.replace(codeBlockRegex, '').trim()
+        };
+      }
+      return { code: text.trim(), language: 'javascript', nonCode: '' };
+    }
+
+    async function callAI() {
+      const prompt = document.getElementById('prompt').value;
+      const responseElement = document.getElementById('response');
+      const responseContainer = document.getElementById('response-container');
+      const codeContainer = document.getElementById('code-container');
+      const statusElement = document.getElementById('status');
+      const button = document.querySelector('button');
+
+      if (!prompt.trim()) {
+        statusElement.textContent = 'Please enter a prompt.';
+        return;
+      }
+
+      statusElement.textContent = 'Generating...';
+      button.disabled = true;
+
+      const apiKey = 'AIzaSyBgPJttKb0cpgoe03sjSkb5Wy978IvrTdc'; // Replace with your actual API key
+      const endpoint = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+
+      const requestBody = {
+        contents: [{ parts: [{ text: prompt }] }],
+      };
+
+      try {
+        const res = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestBody),
+        });
+
+        const data = await res.json();
+        responseContainer.classList.remove('hidden');
+        codeContainer.classList.add('hidden');
+        responseElement.textContent = '';
+
+        if (data.candidates && data.candidates.length > 0) {
+          const responseText = data.candidates[0].content.parts[0].text;
+          if (isCodeResponse(responseText)) {
+            const { code, language, nonCode } = extractCodeAndLanguage(responseText);
+            if (nonCode) responseElement.textContent = nonCode;
+            initializeCodeEditor(code, language);
+          } else {
+            responseElement.textContent = responseText;
+          }
+          statusElement.textContent = 'Success!';
+        } else {
+          responseElement.textContent = 'No response from the model.';
+          statusElement.textContent = 'No response.';
+        }
+      } catch (error) {
+        console.error('Error:', error);
+        responseContainer.classList.remove('hidden');
+        codeContainer.classList.add('hidden');
+        responseElement.textContent = 'An error occurred while calling the API.';
+        statusElement.textContent = 'Error occurred.';
+      } finally {
+        button.disabled = false;
+        setTimeout(() => {
+          statusElement.textContent = '';
+        }, 2000);
+      }
+    }
+	
+  </script>
+ <script>
+  document.querySelector("textarea").addEventListener("keydown", function (e) {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault(); 
+      document.getElementById("callAIModel").click(); 
+    }
+  });
+</script>
+</body>
+</html>

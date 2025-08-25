@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Currency Converter</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background: linear-gradient(135deg, #6b21a8, #c084fc);
+            min-height: 100vh;
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 1rem;
+        }
+        .glass-container {
+            background: rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(15px);
+            border-radius: 1.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.3);
+            padding: 2rem;
+            width: 100%;
+            max-width: 28rem;
+            transition: transform 0.3s ease;
+        }
+        .glass-container:hover {
+            transform: translateY(-5px);
+        }
+        input, select {
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            border-radius: 0.5rem;
+            padding: 0.75rem;
+            width: 100%;
+            transition: all 0.3s ease;
+            appearance: none;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+        }
+        select {
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='white' viewBox='0 0 24 24' width='24' height='24'%3E%3Cpath d='M7 10l5 5 5-5z'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 0.75rem center;
+            background-size: 1rem;
+        }
+        input:focus, select:focus {
+            outline: none;
+            border-color: #facc15;
+            background: rgba(255, 255, 255, 0.25);
+            box-shadow: 0 0 10px rgba(250, 204, 21, 0.5);
+        }
+        input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+        select option {
+            background: #1f2937;
+            color: white;
+            padding: 0.5rem;
+        }
+        .convert-btn {
+            background: linear-gradient(90deg, #facc15, #f97316);
+            color: #1f2937;
+            font-weight: 600;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            width: 100%;
+            transition: all 0.3s ease;
+        }
+        .convert-btn:hover {
+            background: linear-gradient(90deg, #eab308, #ea580c);
+            transform: scale(1.05);
+        }
+        .swap-btn {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.5rem;
+            border-radius: 50%;
+            transition: all 0.3s ease;
+        }
+        .swap-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(180deg);
+        }
+        .result-box {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 0.5rem;
+            padding: 1rem;
+            color: white;
+            text-align: center;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        @media (max-width: 640px) {
+            .glass-container {
+                padding: 1.5rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="glass-container">
+        <h1 class="text-2xl font-semibold text-white text-center mb-6">Currency Converter</h1>
+        <div class="space-y-5">
+            <div>
+                <label class="block text-sm text-white/90 mb-1.5">Amount</label>
+                <input id="amount" type="number" value="1" class="placeholder-white/70" placeholder="Enter amount" step="any">
+            </div>
+            <div class="space-y-5">
+                <div>
+                    <label class="block text-sm text-white/90 mb-1.5">From</label>
+                    <select id="fromCurrency"></select>
+                </div>
+                <div class="flex justify-center">
+                    <button onclick="swapCurrencies()" class="swap-btn">
+                        <svg class="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m-16 6h12m0 0l-4-4m4 4l-4 4"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div>
+                    <label class="block text-sm text-white/90 mb-1.5">To</label>
+                    <select id="toCurrency"></select>
+                </div>
+            </div>
+            <button onclick="convertCurrency()" class="convert-btn">Convert</button>
+            <div id="result" class="result-box"></div>
+        </div>
+    </div>
+
+    <script>
+        const apiKey = '92727857afc5544a1467ed78f15269e9'; // Replace with your Fixer.io API key
+        const apiUrl = 'https://data.fixer.io/api/latest';
+        let rates = {};
+
+        async function fetchCurrencies() {
+            try {
+                const response = await fetch(`${apiUrl}?access_key=${apiKey}`);
+                const data = await response.json();
+                rates = data.rates;
+                populateCurrencies(data.rates);
+            } catch (error) {
+                console.error('Error fetching currencies:', error);
+                document.getElementById('result').textContent = 'Failed to load currencies';
+            }
+        }
+
+        function populateCurrencies(rates) {
+            const fromSelect = document.getElementById('fromCurrency');
+            const toSelect = document.getElementById('toCurrency');
+            for (const currency in rates) {
+                const option1 = document.createElement('option');
+                const option2 = document.createElement('option');
+                option1.value = currency;
+                option1.text = currency;
+                option2.value = currency;
+                option2.text = currency;
+                fromSelect.appendChild(option1);
+                toSelect.appendChild(option2);
+            }
+            fromSelect.value = 'USD';
+            toSelect.value = 'EUR';
+        }
+
+        function convertCurrency() {
+            const amount = parseFloat(document.getElementById('amount').value);
+            const fromCurrency = document.getElementById('fromCurrency').value;
+            const toCurrency = document.getElementById('toCurrency').value;
+            const resultDiv = document.getElementById('result');
+
+            if (!amount || isNaN(amount)) {
+                resultDiv.textContent = 'Please enter a valid amount';
+                return;
+            }
+
+            const fromRate = rates[fromCurrency];
+            const toRate = rates[toCurrency];
+            const convertedAmount = (amount / fromRate) * toRate;
+
+            resultDiv.textContent = `${amount.toFixed(2)} ${fromCurrency} = ${convertedAmount.toFixed(2)} ${toCurrency}`;
+        }
+
+        function swapCurrencies() {
+            const fromSelect = document.getElementById('fromCurrency');
+            const toSelect = document.getElementById('toCurrency');
+            const temp = fromSelect.value;
+            fromSelect.value = toSelect.value;
+            toSelect.value = temp;
+            convertCurrency();
+        }
+
+        fetchCurrencies();
+    </script>
+</body>
+</html>
